@@ -28,22 +28,25 @@ def get_guard_num(status):
 def get_sleep_times(data):
     sleep_times = {}
     current_guard = -1
+    asleep = False
     
     for record in data:
         minute = record[1]
         status = record[2]
-        asleep = False
-        time = 0
-
+        
         if "#" in status:
-            current_guard = get_guard_num(status)
+            if asleep:
+                for i in range(sleep_start, minute):
+                    sleep_times[current_guard][i] += 1
 
+            current_guard = get_guard_num(status)
+            asleep = True
+            sleep_start = minute
+            
             if current_guard not in sleep_times.keys():
                 sleep_times[current_guard] = [0] * 60
 
-            if asleep:
-                for i in range(sleep_start, time):
-                    sleep_times[current_guard][i] += 1
+
         elif status == "falls asleep":
             asleep = True
             sleep_start = minute
@@ -51,8 +54,6 @@ def get_sleep_times(data):
             asleep = False
             for i in range(sleep_start, minute):
                 sleep_times[current_guard][i] += 1
-
-        #print(current_guard, minute_list)
         
     return sleep_times
 
@@ -63,7 +64,6 @@ def get_sleepiest_guard(sleep_times):
     for guard_num, minute_list in sleep_times.items():
         total_sleep = sum(minute_list)
 
-        print(guard_num, total_sleep)
         if total_sleep > max_sleep:
             max_sleep = total_sleep
             sleepiest = guard_num
@@ -75,31 +75,38 @@ def get_time_most_asleep(minute_list):
     max_sleep = 0
 
     for i, sleep_time in enumerate(minute_list):
-        print(i, sleep_time)
         if sleep_time > max_sleep:
             max_minute = i
             max_sleep = sleep_time
 
     return max_minute
-            
 
 # solutions
 def solve1(data):
-    data = sort_by_time(data)
-    sleep_times = get_sleep_times(data)
-
-    for k, v in sleep_times.items():
-        print(k, v)
-        
+    data = sort_by_time(data)        
+    sleep_times = get_sleep_times(data)        
     guard_num = get_sleepiest_guard(sleep_times)
     minutes_asleep = sleep_times[guard_num]
     time = get_time_most_asleep(minutes_asleep)
 
-    print(guard_num, time)
     return guard_num * time
 
 def solve2(data):
-    return None
+    data = sort_by_time(data)        
+    sleep_times = get_sleep_times(data)
+
+    max_minute = -1
+    max_slept_at_minute = -1
+    guard_num = -1
+    
+    for k, v in sleep_times.items():
+        for i, minutes in enumerate(v):
+            if minutes >= max_slept_at_minute:
+                max_slept_at_minute = minutes
+                max_minute = i
+                guard_num = k
+
+    return guard_num * max_minute
 
 # go
 path = 'data/input_04.txt'
